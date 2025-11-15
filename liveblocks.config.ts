@@ -1,5 +1,7 @@
 // Define Liveblocks types for your application
 // https://liveblocks.io/docs/api-reference/liveblocks-react#Typing-your-data
+import { LiveList } from "@liveblocks/client";
+
 declare global {
   interface Liveblocks {
     // Each user's Presence, for useMyPresence, useOthers, etc.
@@ -12,6 +14,15 @@ declare global {
     Storage: {
       // Example, a conflict-free list
       // animals: LiveList<string>;
+      drawings: LiveList<{
+        id: string;
+        points: Array<{ x: number; y: number }>;
+        color: string;
+        width: number;
+        userId: string;
+        userName: string;
+        timestamp: number;
+      }>;
     };
 
     // Custom user info set when authenticating with a secret key

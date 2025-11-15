@@ -15,6 +15,7 @@ import React from 'react';
 import Loader from '../Loader';
 import { useThreads } from '@liveblocks/react/suspense';
 import Comments from '../ui/Comments';
+import DownloadButton from '../DownloadButton';
 
 // Catch any errors that occur during Lexical updates and log them
 // or throw them as needed. If you don't throw them, Lexical will
@@ -62,6 +63,7 @@ export function Editor({currentUserType }:{ currentUserType:UserType}) {
             {currentUserType === 'editor' && <FloatingToolbarPlugin />}
             <HistoryPlugin />
             <AutoFocusPlugin />
+            <DownloadButton documentTitle="Document" />
           </div>
             )}
             <LiveblocksPlugin>

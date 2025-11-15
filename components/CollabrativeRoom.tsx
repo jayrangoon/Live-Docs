@@ -17,6 +17,10 @@ import { Input } from "./ui/input";
 import Image from "next/image";
 import { updateDocument } from "@/lib/actions/room.actions";
 import ShareModal from "./ShareModal";
+import DrawingCanvas from "./DrawingCanvas";
+import DrawingToolbar from "./DrawingToolbar";
+import { useUser } from "@clerk/nextjs";
+import { LiveList } from "@liveblocks/client";
 
 type RoomMetadata = {
   creatorId: string;
@@ -51,6 +55,13 @@ const CollabrativeRoom = ({
   const [loading, setLoading] = useState(false);
   const [documentTitle, setDocumentTitle] = useState(roomMetaData.title);
 
+  // Drawing feature states
+  const [drawingMode, setDrawingMode] = useState(false);
+  const [currentColor, setCurrentColor] = useState("#000000");
+  const [currentWidth, setCurrentWidth] = useState(4);
+  const [tool, setTool] = useState<"pen" | "eraser">("pen");
+
+  const { user } = useUser();
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -93,7 +104,12 @@ const CollabrativeRoom = ({
 
   return (
     <div>
-      <RoomProvider id={roomId}>
+      <RoomProvider 
+        id={roomId}
+        initialStorage={{
+          drawings: new LiveList([]),
+        }}
+      >
         <ClientSideSuspense fallback={<Loader />}>
         <div className="flex size-full max-h-screen flex-1 flex-col items-center overflow-hidden relative">
           <Header>
@@ -134,7 +150,57 @@ const CollabrativeRoom = ({
               )}
               {loading && <p className="text-sm text-gray-400">Saving..</p>}
             </div>
-            <div className="flex w-[200px] justify-end gap-2 sm:gap-2">
+            <div className="flex w-[250px] justify-end gap-2 sm:gap-2">
+
+            {/* Download Button */}
+            <button
+              onClick={() => {
+                // This will be handled by a separate component inside the editor
+                const event = new CustomEvent('downloadDocument', { 
+                  detail: { title: documentTitle } 
+                });
+                window.dispatchEvent(event);
+              }}
+              className="flex items-center gap-2 px-3 py-2 rounded-md transition-all bg-green-500 hover:bg-green-600 text-white"
+              title="Download as Word file"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-5 w-5"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z"
+                  clipRule="evenodd"
+                />
+              </svg>
+              <span className="hidden sm:inline text-sm">Download</span>
+            </button>
+
+            {/* Drawing Mode Toggle Button */}
+            <button
+              onClick={() => setDrawingMode(!drawingMode)}
+              className={`flex items-center gap-2 px-3 py-2 rounded-md transition-all ${
+                drawingMode
+                  ? "bg-blue-500 text-white"
+                  : "bg-dark-400 text-gray-300 hover:bg-dark-400/70"
+              }`}
+              title={drawingMode ? "Exit Drawing Mode" : "Enter Drawing Mode"}
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-5 w-5"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+              </svg>
+              <span className="hidden sm:inline text-sm">
+                {drawingMode ? "Drawing" : "Draw"}
+              </span>
+            </button>
 
             <ActiveCollabrator />
 
@@ -160,7 +226,36 @@ const CollabrativeRoom = ({
               </div>
             </div>
           </Header>
-          <Editor currentUserType={currentUserType}/>
+          
+          {/* Drawing Components */}
+          {drawingMode && (
+            <DrawingToolbar
+              currentColor={currentColor}
+              setCurrentColor={setCurrentColor}
+              currentWidth={currentWidth}
+              setCurrentWidth={setCurrentWidth}
+              tool={tool}
+              setTool={setTool}
+              onClose={() => setDrawingMode(false)}
+              userType={currentUserType}
+            />
+          )}
+
+          {/* Drawing Canvas Overlay */}
+          <div className="relative flex-1 w-full">
+            <Editor currentUserType={currentUserType} />
+            {user && (
+              <DrawingCanvas
+                currentColor={currentColor}
+                currentWidth={currentWidth}
+                tool={tool}
+                isEnabled={drawingMode}
+                currentUserId={user.id}
+                currentUserName={user.fullName || user.firstName || "Anonymous"}
+                userType={currentUserType}
+              />
+            )}
+          </div>
         </div>
         </ClientSideSuspense>
       </RoomProvider>
