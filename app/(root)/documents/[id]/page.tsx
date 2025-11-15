@@ -16,7 +16,6 @@ type DocumentProps = {
 
 type UserType = "creator" | "editor" | "viewer";
 
-
 type User = {
   id: string;
   name: string;
@@ -26,13 +25,13 @@ type User = {
   userType?: UserType;
 };
 
-const Document = async({ params }: DocumentProps) => {
+const Document = async ({ params }: DocumentProps) => {
   const user = await currentUser();
 
   if (!user) {
     redirect("/sign-in");
   }
-   // ✅ Await params
+  // ✅ Await params
   //  const roomId = params?.id;
   //  console.log(params?.id);
   const { id } = await params;
@@ -45,7 +44,7 @@ const Document = async({ params }: DocumentProps) => {
   // console.log("Room ID from params:", id);
 
   const room = await getDocument({
-    roomId:id,
+    roomId: id,
     userId: user.emailAddresses[0].emailAddress,
   });
 
@@ -55,19 +54,29 @@ const Document = async({ params }: DocumentProps) => {
   }
 
   const userIds = Object.keys(room.usersAccesses);
-  const users = await getClerkusers({userIds});
-
-  const userData = users.map((user: User) => ({
+  const users = await getClerkusers({ userIds });
+  // console.log("users", users);
+  const usersData = users.map((user: User) => ({
     ...user,
-    userType: room.usersAccesses[user.email]?.includes('room:write') ? 'editor' : 'viewer'
-  }))
+    userType: room.usersAccesses[user?.email]?.includes("room:write")
+      ? "editor"
+      : "viewer",
+  }));
 
-  const currentUserType = room.usersAccesses[user.emailAddresses[0].emailAddress]?.includes('room:write') ? 
-    'editor' : 'viewer'
+  const currentUserType = room.usersAccesses[
+    user.emailAddresses[0].emailAddress
+  ]?.includes("room:write")
+    ? "editor"
+    : "viewer";
 
   return (
     <div>
-      <CollabrativeRoom roomId={id} roomMetaData={room.metadata} currentUserType={currentUserType}/>
+      <CollabrativeRoom
+        roomId={id}
+        roomMetaData={room.metadata}
+        users={usersData}
+        currentUserType={currentUserType}
+      />
     </div>
   );
 };

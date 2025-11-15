@@ -16,6 +16,7 @@ import ActiveCollabrator from "./ActiveCollabrator";
 import { Input } from "./ui/input";
 import Image from "next/image";
 import { updateDocument } from "@/lib/actions/room.actions";
+import ShareModal from "./ShareModal";
 
 type RoomMetadata = {
   creatorId: string;
@@ -37,10 +38,12 @@ type User = {
 const CollabrativeRoom = ({
   roomId,
   roomMetaData,
+  users,
   currentUserType
 }: {
   roomId: string;
   roomMetaData: RoomMetadata;
+  users:User[];
   currentUserType: UserType;
 }) => {
 
@@ -92,7 +95,7 @@ const CollabrativeRoom = ({
     <div>
       <RoomProvider id={roomId}>
         <ClientSideSuspense fallback={<Loader />}>
-        <div className="flex size-full max-h-screen flex-1 flex-col items-center overflow-hidden">
+        <div className="flex size-full max-h-screen flex-1 flex-col items-center overflow-hidden relative">
           <Header>
             <div
               ref={containerRef}
@@ -131,8 +134,17 @@ const CollabrativeRoom = ({
               )}
               {loading && <p className="text-sm text-gray-400">Saving..</p>}
             </div>
-            <div className="flex w-[90px] justify-end gap-2 sm:gap-3">
-              <ActiveCollabrator />
+            <div className="flex w-[200px] justify-end gap-2 sm:gap-2">
+
+            <ActiveCollabrator />
+
+              <ShareModal 
+                roomId={roomId}
+                collaborators={users}
+                creatorId={roomMetaData.creatorId}
+                currentUserType={currentUserType}
+              />
+
               <div className="flex gap-2">
                 <SignedOut>
                   <div className="bg-white cursor-pointer p-2 px-5 text-black rounded-full">
